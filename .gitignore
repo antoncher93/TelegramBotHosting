@@ -396,3 +396,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/.idea/.idea.TelegramBotHosting.dir/.idea/vcs.xml
+/.idea/.idea.TelegramBotHosting.dir/.idea/indexLayout.xml
+/.idea/.idea.TelegramBotHosting.dir/.idea/.gitignore
+/.idea/.idea.TelegramBotHosting.dir/.idea/encodings.xml
