@@ -8,31 +8,21 @@ namespace Telegram.Bot.Hosting;
 
 public static class BotHost
 {
-    private static Func<CancellationToken,Task> _waitForShutDownAsync;
+    private static Func<CancellationToken,Task>? _waitForShutDownAsync;
 
-    public static Task StartAsync<T>(
+    public static Task StartAsync(
         string[] args,
-        Func<T, IBotFacade> botFacadeFactory)
+        string telegramBotToken,
+        Func<ITelegramBotClient, IBotFacade> botFacadeFactory)
     {
-        var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
-            .SetFileLoadExceptionHandler(ctx =>
-            {
-                if (!(ctx.Exception is FileNotFoundException))
-                    throw ctx.Exception;
-                else
-                {
-                    ctx.Ignore = true;
-                }
-            })
-            .Build()
-            .Get<T>();
-
+        var client = new TelegramBotClient(
+            token: telegramBotToken);
+        
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllers().AddNewtonsoftJson();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-        builder.Services.AddSingleton<IBotFacade>(botFacadeFactory(config));
+        builder.Services.AddSingleton<IBotFacade>(botFacadeFactory(client));
         
         var mvcBuilder = builder.Services.AddMvc();
         mvcBuilder.AddApplicationPart(Assembly.GetExecutingAssembly());
@@ -65,6 +55,11 @@ public static class BotHost
     public static Task WaitForShutdownAsync(
         CancellationToken token)
     {
-        return _waitForShutDownAsync(token);
+        if (_waitForShutDownAsync != null)
+        {
+            return _waitForShutDownAsync(token);
+        }
+
+        return Task.CompletedTask;
     }
 }
