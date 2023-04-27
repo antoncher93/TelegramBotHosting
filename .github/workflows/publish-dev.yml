@@ -1,0 +1,42 @@
+name: Publish Nuget Package (dev)
+
+on:
+  push:
+    branches:
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!master'   # excludes master
+env:
+  VERSION: 1.0.1-dev
+  NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+
+jobs:
+  build-test-publish:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        dotnet-version: ['3.1.x']
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
+      - name: Environment Variables
+        run: env
+      - name: Pack
+        run: dotnet pack --configuration Release -o ./ -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
+      - name: Publish (dev)
+        env:
+          NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+        run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ env.NUGET_TOKEN }} --skip-duplicate

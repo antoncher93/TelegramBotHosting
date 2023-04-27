@@ -18,8 +18,9 @@ public static class SutFactory
 
         var cts = new CancellationTokenSource();
 
-        await BotHost.StartAsync<FakeConfiguration>(
+        await BotHost.StartAsync(
             args: new[] { "--urls", baseAddress },
+            telegramBotToken: Values.RandomString(),
             botFacadeFactory: _ => fakeBotFacade);
 
         var completionTask = BotHost.WaitForShutdownAsync(cts.Token);
