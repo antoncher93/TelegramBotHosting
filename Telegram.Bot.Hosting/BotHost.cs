@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -13,12 +14,20 @@ public static class BotHost
 
     public static Task StartAsync(
         int port,
+        string webhookHost,
         string telegramBotToken,
         Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
-        string host = "https://localhost")
+        string host = "https://localhost",
+        HttpMessageHandler? httpMessageHandler = default)
     {
         var client = new TelegramBotClient(
-            token: telegramBotToken);
+            token: telegramBotToken,
+            httpClient: new HttpClient(
+                handler: httpMessageHandler ?? new HttpClientHandler()));
+
+        client
+            .SetWebhookAsync($"{webhookHost}/api/update")
+            .Wait();
 
         var botFacade = botFacadeFactory(client);
         var builder = WebApplication.CreateBuilder(
