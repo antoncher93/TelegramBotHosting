@@ -8,7 +8,7 @@ public static class SutFactory
     public static async Task<Sut> CreateAsync()
     {
         var port = GetTcpPort();
-        var baseAddress = $"http://localhost:{port}";
+        var baseAddress = $"https://localhost:{port}";
         var httpClient = new HttpClient()
         {
             BaseAddress = new Uri(baseAddress),
@@ -19,7 +19,7 @@ public static class SutFactory
         var cts = new CancellationTokenSource();
 
         await BotHost.StartAsync(
-            args: new[] { "--urls", baseAddress },
+            port: port,
             telegramBotToken: Values.RandomString(),
             botFacadeFactory: _ => fakeBotFacade);
 
