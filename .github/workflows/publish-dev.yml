@@ -32,11 +32,3 @@ jobs:
         run: dotnet build --configuration Release --no-restore
       - name: Test
         run: dotnet test --no-restore --verbosity normal
-      - name: Environment Variables
-        run: env
-      - name: Pack
-        run: dotnet pack --configuration Release -o ./ -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
-      - name: Publish (dev)
-        env:
-          NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
-        run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ env.NUGET_TOKEN }} --skip-duplicate
