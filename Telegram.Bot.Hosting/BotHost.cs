@@ -14,14 +14,15 @@ public static class BotHost
     public static Task StartAsync(
         int port,
         string telegramBotToken,
-        Func<ITelegramBotClient, IBotFacade> botFacadeFactory)
+        Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
+        string host = "https://localhost")
     {
         var client = new TelegramBotClient(
             token: telegramBotToken);
 
         var botFacade = botFacadeFactory(client);
         var builder = WebApplication.CreateBuilder(
-            args: new []{"--urls", $"https://localhost:{port}"});
+            args: new []{"--urls", $"{host}:{port}"});
         var app = builder.Build();
 
         app.MapGet("/api/healthcheck", _ => Task.CompletedTask);
