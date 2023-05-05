@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace Telegram.Bot.Hosting;
 
@@ -17,8 +18,9 @@ public static class BotHost
         string webhookHost,
         string telegramBotToken,
         Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
-        string host = "https://localhost",
-        HttpMessageHandler? httpMessageHandler = default)
+        IEnumerable<UpdateType>? allowedUpdates = default,
+        HttpMessageHandler? httpMessageHandler = default,
+        string host = "https://localhost")
     {
         var client = new TelegramBotClient(
             token: telegramBotToken,
@@ -26,7 +28,9 @@ public static class BotHost
                 handler: httpMessageHandler ?? new HttpClientHandler()));
 
         client
-            .SetWebhookAsync($"{webhookHost}/api/update")
+            .SetWebhookAsync(
+                url: $"{webhookHost}/api/update",
+                allowedUpdates: allowedUpdates)
             .Wait();
 
         var botFacade = botFacadeFactory(client);
