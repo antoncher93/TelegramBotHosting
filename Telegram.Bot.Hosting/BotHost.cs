@@ -19,8 +19,7 @@ public static class BotHost
         string telegramBotToken,
         Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
         IEnumerable<UpdateType>? allowedUpdates = default,
-        HttpMessageHandler? httpMessageHandler = default,
-        string host = "https://localhost")
+        HttpMessageHandler? httpMessageHandler = default)
     {
         var client = new TelegramBotClient(
             token: telegramBotToken,
@@ -30,12 +29,13 @@ public static class BotHost
         client
             .SetWebhookAsync(
                 url: $"{webhookHost}/api/update",
-                allowedUpdates: allowedUpdates)
+                allowedUpdates: allowedUpdates,
+                dropPendingUpdates: true)
             .Wait();
 
         var botFacade = botFacadeFactory(client);
         var builder = WebApplication.CreateBuilder(
-            args: new []{"--urls", $"{host}:{port}"});
+            args: new []{"--urls", $"http://localhost:{port}"});
         var app = builder.Build();
 
         app.MapGet("/api/healthcheck", _ => Task.CompletedTask);
@@ -46,8 +46,6 @@ public static class BotHost
             await botFacade.OnUpdateAsync(update!);
             context.Response.StatusCode = (int)HttpStatusCode.OK;
         });
-
-        app.UseHttpsRedirection();
 
         var task = app.StartAsync();
         _waitForShutDownAsync = app.WaitForShutdownAsync;

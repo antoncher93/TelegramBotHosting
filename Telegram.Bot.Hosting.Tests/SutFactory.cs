@@ -21,7 +21,6 @@ public static class SutFactory
         await BotHost.StartAsync(
             webhookHost: "https://webhook.my",
             port: port,
-            host: "http://localhost",
             telegramBotToken: Values.RandomString(),
             httpMessageHandler: new HttpMessageHandlerStub(),
             botFacadeFactory: _ => fakeBotFacade);
