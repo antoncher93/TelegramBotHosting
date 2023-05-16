@@ -35,7 +35,8 @@ public static class BotHost
 
         var botFacade = botFacadeFactory(client);
         var builder = WebApplication.CreateBuilder(
-            args: new []{"--urls", $"http://localhost:{port}"});
+            args: new []{"--urls", $"http://*:{port}"});
+        
         var app = builder.Build();
 
         app.MapGet("/api/healthcheck", _ => Task.CompletedTask);
