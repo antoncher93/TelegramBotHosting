@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -19,7 +18,8 @@ public static class BotHost
         string telegramBotToken,
         Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
         IEnumerable<UpdateType>? allowedUpdates = default,
-        HttpMessageHandler? httpMessageHandler = default)
+        HttpMessageHandler? httpMessageHandler = default,
+        Action<WebApplication>? configureApp = default)
     {
         var client = new TelegramBotClient(
             token: telegramBotToken,
@@ -47,6 +47,8 @@ public static class BotHost
             await botFacade.OnUpdateAsync(update!);
             context.Response.StatusCode = (int)HttpStatusCode.OK;
         });
+
+        configureApp?.Invoke(app);
 
         var task = app.StartAsync();
         _waitForShutDownAsync = app.WaitForShutdownAsync;
