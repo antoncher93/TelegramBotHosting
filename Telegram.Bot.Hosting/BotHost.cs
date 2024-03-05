@@ -1,75 +1,33 @@
-﻿using System.Net;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace Telegram.Bot.Hosting;
 
-public static class BotHost
+internal class BotHost : IBotHost
 {
-    private static Func<CancellationToken,Task>? _waitForShutDownAsync;
+    private readonly WebApplication _app;
+    private Func<CancellationToken,Task>? _waitForShutDownAsync;
 
-    public static Task StartAsync(
-        int port,
-        string webhookHost,
-        string telegramBotToken,
-        Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
-        IEnumerable<UpdateType>? allowedUpdates = default,
-        HttpMessageHandler? httpMessageHandler = default,
-        Action<WebApplication>? configureApp = default)
+    public BotHost(
+        WebApplication app)
     {
-        var client = new TelegramBotClient(
-            token: telegramBotToken,
-            httpClient: new HttpClient(
-                handler: httpMessageHandler ?? new HttpClientHandler()));
-
-        client
-            .SetWebhookAsync(
-                url: $"{webhookHost}/api/update",
-                allowedUpdates: allowedUpdates,
-                dropPendingUpdates: true)
-            .Wait();
-
-        var botFacade = botFacadeFactory(client);
-        var builder = WebApplication.CreateBuilder(
-            args: new []{"--urls", $"http://*:{port}"});
-        
-        var app = builder.Build();
-
-        app.MapGet("/api/healthcheck", _ => Task.CompletedTask);
-        app.MapPost("/api/update",  async context =>
-        {
-            var content = await ReadContentFromRequestAsync(context.Request);
-            var update = JsonConvert.DeserializeObject<Update>(content);
-            await botFacade.OnUpdateAsync(update!);
-            context.Response.StatusCode = (int)HttpStatusCode.OK;
-        });
-
-        configureApp?.Invoke(app);
-
-        var task = app.StartAsync();
-        _waitForShutDownAsync = app.WaitForShutdownAsync;
-        return task;
+        _app = app;
     }
 
-    private static async Task<string> ReadContentFromRequestAsync(
-        HttpRequest contextRequest)
+    public Task WaitForShutdownAsync(CancellationToken cancellationToken)
     {
-        using var reader = new StreamReader(contextRequest.Body);
-        return await reader.ReadToEndAsync();
-    }
-
-    public static Task WaitForShutdownAsync(
-        CancellationToken token)
-    {
-        if (_waitForShutDownAsync != null)
+        if (_waitForShutDownAsync is null)
         {
-            return _waitForShutDownAsync(token);
+            return Task.CompletedTask;
         }
+        
+        return _waitForShutDownAsync(cancellationToken);
+    }
 
-        return Task.CompletedTask;
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        var task = _app.StartAsync(cancellationToken);
+        _waitForShutDownAsync = _app.WaitForShutdownAsync;
+        return task;
     }
 }

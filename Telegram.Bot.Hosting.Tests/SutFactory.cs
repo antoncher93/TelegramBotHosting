@@ -18,14 +18,15 @@ public static class SutFactory
 
         var cts = new CancellationTokenSource();
 
-        await BotHost.StartAsync(
-            webhookHost: "https://webhook.my",
+        var botHost = BotHostFactory.Create(
             port: port,
             telegramBotToken: Values.RandomString(),
             httpMessageHandler: new HttpMessageHandlerStub(),
             botFacadeFactory: _ => fakeBotFacade);
 
-        var completionTask = BotHost.WaitForShutdownAsync(cts.Token);
+        await botHost.StartAsync(cts.Token);
+
+        var completionTask = botHost.WaitForShutdownAsync(cts.Token);
 
         return new Sut(
             client: httpClient,
