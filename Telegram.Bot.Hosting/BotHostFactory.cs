@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Telegram.Bot.Types;
 
@@ -24,7 +25,8 @@ public static class BotHostFactory
         
         var app = builder.Build();
 
-        app.MapGet("/healthcheck", _ => Task.CompletedTask);
+        app.MapGet("/healthcheck",  async context => await BuildInfoAsync(context));
+        
         app.MapPost("/update",  async context =>
         {
             using var reader = new StreamReader(context.Request.Body);
@@ -38,5 +40,16 @@ public static class BotHostFactory
         });
 
         return new BotHost(app);
+    }
+
+    private static async Task BuildInfoAsync(HttpContext httpContext)
+    {
+        var info = new
+        {
+            Status = "ok",
+            Version = typeof(BotHost).Assembly.GetName().Version?.ToString(),
+        };
+
+        await httpContext.Response.WriteAsJsonAsync(info);
     }
 }
