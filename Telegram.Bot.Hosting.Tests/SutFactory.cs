@@ -24,9 +24,7 @@ public static class SutFactory
             httpMessageHandler: new HttpMessageHandlerStub(),
             botFacadeFactory: _ => fakeBotFacade);
 
-        await botHost.StartAsync(cts.Token);
-
-        var completionTask = botHost.WaitForShutdownAsync(cts.Token);
+        await Task.Factory.StartNew(() => botHost.RunAsync(), cts.Token);
 
         return new Sut(
             client: httpClient,
@@ -34,7 +32,6 @@ public static class SutFactory
             dispose: () =>
             {
                 cts.Cancel();
-                completionTask.Wait();
             });
     }
 

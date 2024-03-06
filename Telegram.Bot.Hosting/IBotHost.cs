@@ -2,9 +2,5 @@
 
 public interface IBotHost
 {
-    Task StartAsync(
-        CancellationToken cancellationToken);
-
-    Task WaitForShutdownAsync(
-        CancellationToken cancellationToken);
+    Task RunAsync();
 }

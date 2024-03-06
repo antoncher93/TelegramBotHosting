@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
 
 namespace Telegram.Bot.Hosting;
 
 internal class BotHost : IBotHost
 {
     private readonly WebApplication _app;
-    private Func<CancellationToken,Task>? _waitForShutDownAsync;
 
     public BotHost(
         WebApplication app)
@@ -14,20 +12,8 @@ internal class BotHost : IBotHost
         _app = app;
     }
 
-    public Task WaitForShutdownAsync(CancellationToken cancellationToken)
+    public Task RunAsync()
     {
-        if (_waitForShutDownAsync is null)
-        {
-            return Task.CompletedTask;
-        }
-        
-        return _waitForShutDownAsync(cancellationToken);
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        var task = _app.StartAsync(cancellationToken);
-        _waitForShutDownAsync = _app.WaitForShutdownAsync;
-        return task;
+        return _app.RunAsync();
     }
 }
