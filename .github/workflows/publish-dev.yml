@@ -8,7 +8,7 @@ on:
       - '**'        # matches every branch
       - '!master'   # excludes master
 env:
-  VERSION: 1.0.1-dev
+  VERSION: 2.0.${{ github.run_number }}-dev
   NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
 
 jobs:
@@ -32,3 +32,9 @@ jobs:
         run: dotnet build --configuration Release --no-restore
       - name: Test
         run: dotnet test --no-restore --verbosity normal
+      - name: Pack
+        run: dotnet pack --configuration Release -o ./ -p:Version=${{ env.VERSION }} -p:PackageVersion=${{ env.VERSION }}
+      - name: Publish release
+        env:
+          NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+        run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ env.NUGET_TOKEN }} --skip-duplicate

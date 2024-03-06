@@ -48,7 +48,7 @@ public class Sut : IDisposable
     {
         var request = new HttpRequestMessage(
             method: HttpMethod.Post,
-            requestUri: "api/update");
+            requestUri: "/update");
 
         var json = Newtonsoft.Json.JsonConvert.SerializeObject(update);
         
