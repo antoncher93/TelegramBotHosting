@@ -19,6 +19,7 @@ public static class SutFactory
         var cts = new CancellationTokenSource();
 
         var botHost = BotHostFactory.Create(
+            host: "my.test.app",
             port: port,
             telegramBotToken: Values.RandomString(),
             httpMessageHandler: new HttpMessageHandlerStub(),
