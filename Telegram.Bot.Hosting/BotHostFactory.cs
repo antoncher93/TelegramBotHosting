@@ -21,7 +21,9 @@ public static class BotHostFactory
                 handler: httpMessageHandler ?? new HttpClientHandler()));
 
         client
-            .SetWebhookAsync($"{host}/update")
+            .SetWebhookAsync(
+                 url: $"{host}/update",
+                 dropPendingUpdates: true)
             .GetAwaiter()
             .GetResult();
 
