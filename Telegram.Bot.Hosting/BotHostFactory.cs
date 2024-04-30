@@ -9,15 +9,21 @@ namespace Telegram.Bot.Hosting;
 public static class BotHostFactory
 {
     public static IBotHost Create(
+        string host,
         string telegramBotToken,
-        int port,
         Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
+        int port = 8080,
         HttpMessageHandler? httpMessageHandler = default)
     {
         var client = new TelegramBotClient(
             token: telegramBotToken,
             httpClient: new HttpClient(
                 handler: httpMessageHandler ?? new HttpClientHandler()));
+
+        client
+            .SetWebhookAsync($"{host}/update")
+            .GetAwaiter()
+            .GetResult();
 
         var botFacade = botFacadeFactory(client);
         var builder = WebApplication.CreateBuilder(
@@ -39,7 +45,33 @@ public static class BotHostFactory
             context.Response.StatusCode = (int)HttpStatusCode.OK;
         });
 
+        app.MapGet("/photos/{fileId}", async (string fileId) => await DownloadFileAsync(client, fileId));
+
         return new BotHost(app);
+    }
+
+    private static async Task<object> DownloadFileAsync(
+        TelegramBotClient client,
+        string fileId)
+    {
+        var file = await client.GetFileAsync(fileId);
+
+        try
+        {
+            using var stream = new MemoryStream();
+        
+            await client.DownloadFileAsync(
+                filePath: file.FilePath!,
+                destination: stream);
+
+            var image = stream.ToArray();
+
+            return Results.File(image, "image/jpeg");
+        }
+        catch (Exception e)
+        {
+            return Results.NotFound();
+        }
     }
 
     private static async Task BuildInfoAsync(HttpContext httpContext)
