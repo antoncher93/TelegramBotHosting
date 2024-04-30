@@ -43,7 +43,7 @@ public class Sut : IDisposable
         return this.SendUpdateAsync(update);
     }
 
-    public Task SendUpdateAsync(
+    public Task<HttpResponseMessage> SendUpdateAsync(
         Update update)
     {
         var request = new HttpRequestMessage(

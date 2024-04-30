@@ -5,7 +5,9 @@ namespace Telegram.Bot.Hosting.Tests;
 
 public static class SutFactory
 {
-    public static async Task<Sut> CreateAsync()
+    public static async Task<Sut> CreateAsync(
+        bool throwException = false,
+        TimeSpan delay = default)
     {
         var port = GetTcpPort();
         var baseAddress = $"http://localhost:{port}";
@@ -14,7 +16,9 @@ public static class SutFactory
             BaseAddress = new Uri(baseAddress),
         };
 
-        var fakeBotFacade = new FakeBotFacade();
+        var fakeBotFacade = new FakeBotFacade(
+            throwException: throwException,
+            delay: delay);
 
         var cts = new CancellationTokenSource();
 

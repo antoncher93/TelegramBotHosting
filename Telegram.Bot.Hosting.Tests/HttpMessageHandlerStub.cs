@@ -5,10 +5,13 @@ namespace Telegram.Bot.Hosting.Tests;
 
 public class HttpMessageHandlerStub : HttpMessageHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
     {
         var response = new HttpResponseMessage(
             statusCode: HttpStatusCode.OK);
+        
         if (request.RequestUri!.AbsoluteUri.EndsWith("setWebhook"))
         {
             response.Content = new StringContent(

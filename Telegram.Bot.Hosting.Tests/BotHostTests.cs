@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net;
 using FluentAssertions;
 using Telegram.Bot.Types;
 using Xunit;
@@ -49,6 +51,43 @@ public class BotHostTests
             .Single()
             .Should()
             .BeEquivalentTo(update);
+    }
+
+    [Fact]
+    public async Task ReturnsOkWhenException()
+    {
+        using var sut = await SutFactory.CreateAsync(
+            throwException: true);
+
+        var update = RandomUpdate();
+
+        var response = await sut.SendUpdateAsync(update);
+
+        response.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+    }
+    
+    [Fact]
+    public async Task ReturnsOkWhenTimeoutExceeded()
+    {
+        using var sut = await SutFactory.CreateAsync(
+            delay: TimeSpan.FromSeconds(10));
+
+        var update = RandomUpdate();
+
+        var sw = Stopwatch.StartNew();
+        var response = await sut.SendUpdateAsync(update);
+        sw.Stop();
+
+        response.StatusCode
+            .Should()
+            .Be(HttpStatusCode.OK);
+
+        sw.Elapsed
+            .Should()
+            .BeLessThan(
+                TimeSpan.FromSeconds(1.5));
     }
 
     private Update RandomUpdate()
