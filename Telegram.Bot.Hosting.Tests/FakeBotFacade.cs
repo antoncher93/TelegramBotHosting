@@ -8,21 +8,41 @@ public class FakeBotFacade : IBotFacade
     private readonly List<Message> _messages = new();
     private readonly List<CallbackQuery> _callbackQueries = new();
     private readonly List<Update> _defaultUpdates = new();
-    
+    private readonly bool _throwException;
+    private readonly TimeSpan _delay;
+
+    public FakeBotFacade(
+        bool throwException,
+        TimeSpan delay)
+    {
+        _throwException = throwException;
+        _delay = delay;
+    }
+
     public List<Message> GetReceivedMessages => _messages.ToList();
 
     public List<CallbackQuery> GetReceivedCallbackQueries => _callbackQueries.ToList();
 
     public List<Update> GetDefaultUpdates => _defaultUpdates.ToList();
     
-    public Task OnUpdateAsync(Update update)
+    public async Task OnUpdateAsync(
+        Update update)
     {
-        return update.Type switch
+        if (_throwException)
+        {
+            throw new Exception("Some test exception was occured.");
+        }
+
+        await Task.Delay(_delay);
+        
+        var task = update.Type switch
         {
             UpdateType.Message => this.OnMessageAsync(message: update.Message!),
             UpdateType.CallbackQuery => this.OnCallbackQueryAsync(callbackQuery: update.CallbackQuery!),
             _ => this.OnDefaultUpdateAsync(update: update)
         };
+
+        await task;
     }
     
     private Task OnMessageAsync(

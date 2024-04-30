@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Telegram.Bot.Hosting.Extensions;
 using Telegram.Bot.Types;
 
 namespace Telegram.Bot.Hosting;
@@ -13,6 +14,7 @@ public static class BotHostFactory
         string telegramBotToken,
         Func<ITelegramBotClient, IBotFacade> botFacadeFactory,
         int port = 8080,
+        bool? dropPendingUpdates = default,
         HttpMessageHandler? httpMessageHandler = default)
     {
         var client = new TelegramBotClient(
@@ -23,7 +25,7 @@ public static class BotHostFactory
         client
             .SetWebhookAsync(
                  url: $"{host}/update",
-                 dropPendingUpdates: true)
+                 dropPendingUpdates: dropPendingUpdates)
             .GetAwaiter()
             .GetResult();
 
@@ -32,9 +34,10 @@ public static class BotHostFactory
             args: new []{"--urls", $"http://*:{port}"});
         
         var app = builder.Build();
-
-        app.MapGet("/healthcheck",  async context => await BuildInfoAsync(context));
         
+        app.UseExceptionHandling();
+        app.UseTimeoutFallback();
+        app.MapGet("/healthcheck",  async context => await BuildInfoAsync(context));
         app.MapPost("/update",  async context =>
         {
             using var reader = new StreamReader(context.Request.Body);
@@ -46,7 +49,6 @@ public static class BotHostFactory
             }
             context.Response.StatusCode = (int)HttpStatusCode.OK;
         });
-
         app.MapGet("/photos/{fileId}", async (string fileId) => await DownloadFileAsync(client, fileId));
 
         return new BotHost(app);
